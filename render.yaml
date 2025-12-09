@@ -4,12 +4,11 @@ services:
     env: python
     plan: free
     region: oregon
-    buildCommand: "cd backend && pip install -r requirements.txt"
-    startCommand: "cd backend && uvicorn src.main:app --host 0.0.0.0 --port 10000"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn src.main:app --host 0.0.0.0 --port 10000"
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
-      # Set these in Render dashboard (do not commit secrets)
       - key: DATABASE_URL
         sync: false
       - key: GEMINI_API_KEY
@@ -46,4 +45,3 @@ services:
         value: "true"
       - key: PINECONE_MANAGED_MODEL
         value: llama-text-embed-v2
-
