@@ -25,7 +25,12 @@ app.add_middleware(
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        # Log error but don't crash - database will be initialized on first use
+        print(f"Warning: Database initialization failed on startup: {e}")
+        # In serverless, connections are lazy, so this is acceptable
 
 # Global exception handlers
 @app.exception_handler(DocuPilotException)
