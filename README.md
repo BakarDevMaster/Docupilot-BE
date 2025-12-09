@@ -186,11 +186,15 @@ backend/
 
 See `ENV_SETUP.md` for detailed environment variable setup.
 
-## 🐳 Docker (Optional)
-
-```bash
-docker-compose up --build
-```
+## 🚀 Deploy on Vercel (serverless, Python)
+- Vercel is best suited for the frontend; FastAPI + Postgres is usually better on a backend host (Render/Fly/etc.). If you still deploy to Vercel:
+  - Place `vercel.json` in `backend/`.
+  - Add `api/index.py` that wraps the FastAPI app with Mangum (already added).
+  - Set Vercel Root Directory to `backend`.
+  - Build: Vercel will auto-detect Python; no custom build command needed.
+  - Env vars: add in Vercel dashboard (DATABASE_URL, Pinecone, Gemini, SECRET_KEY, etc.).
+  - Start: Vercel uses serverless functions; no `uvicorn` start command needed.
+  - Note: serverless timeouts and cold starts; connection pooling to Postgres is limited.
 
 ## 📖 API Endpoints Summary
 
