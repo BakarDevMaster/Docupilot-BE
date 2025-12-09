@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: docupilot-backend
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn src.main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
+      # Set these in Render dashboard (do not commit secrets)
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: USE_HF_API
+        value: "false"
+      - key: EMBEDDING_MODEL
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: EMBEDDING_DIMENSION
+        value: "384"
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: docupilot
+      - key: PINECONE_REGION
+        value: us-east-1
+      - key: SECRET_KEY
+        sync: false
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "43200"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_UPLOAD_FOLDER
+        value: docupilot
+      - key: PINECONE_USE_MANAGED
+        value: "true"
+      - key: PINECONE_MANAGED_MODEL
+        value: llama-text-embed-v2
+
