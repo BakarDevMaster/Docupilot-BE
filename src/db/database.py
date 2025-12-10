@@ -11,38 +11,56 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/docupilot")
 
-# Create engine with connection pool settings for Neon/cloud databases
-# These settings help with connection stability
-# Note: If DATABASE_URL already contains query parameters, they will be used
-# We don't override them in connect_args to avoid conflicts
+# Lazy engine creation - only create when needed
+_engine = None
 
-# Parse DATABASE_URL to check if it already has SSL settings
-connect_args = {}
-if "sslmode" not in DATABASE_URL:
-    connect_args["sslmode"] = "require"
-if "connect_timeout" not in DATABASE_URL:
-    connect_args["connect_timeout"] = 10
+def get_engine():
+    """Get or create database engine (lazy initialization)."""
+    global _engine
+    if _engine is None:
+        # Parse DATABASE_URL to check if it already has SSL settings
+        connect_args = {}
+        if "sslmode" not in DATABASE_URL:
+            connect_args["sslmode"] = "require"
+        if "connect_timeout" not in DATABASE_URL:
+            connect_args["connect_timeout"] = 10
+        
+        _engine = create_engine(
+            DATABASE_URL,
+            echo=False,
+            pool_pre_ping=True,  # Verify connections before using them (important for Neon)
+            pool_recycle=300,    # Recycle connections after 5 minutes
+            pool_size=5,         # Number of connections to maintain
+            max_overflow=10,     # Additional connections if needed
+            connect_args=connect_args if connect_args else {}
+        )
+    return _engine
 
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,  # Verify connections before using them (important for Neon)
-    pool_recycle=300,    # Recycle connections after 5 minutes
-    pool_size=5,         # Number of connections to maintain
-    max_overflow=10,     # Additional connections if needed
-    connect_args=connect_args if connect_args else {}
-)
+# For backward compatibility, create engine on import if DATABASE_URL is valid
+try:
+    if DATABASE_URL and "postgresql://" in DATABASE_URL:
+        engine = get_engine()
+    else:
+        engine = None
+except Exception as e:
+    print(f"Warning: Could not initialize database engine on import: {e}")
+    engine = None
 
 def init_db():
     """Initialize database tables."""
-    SQLModel.metadata.create_all(engine)
+    db_engine = get_engine()
+    if db_engine:
+        SQLModel.metadata.create_all(db_engine)
 
 def get_db() -> Generator[Session, None, None]:
     """
     Dependency function to get database session.
     Use with FastAPI Depends().
     """
-    session = Session(engine)
+    db_engine = get_engine()
+    if db_engine is None:
+        raise Exception("Database engine not initialized. Check DATABASE_URL environment variable.")
+    session = Session(db_engine)
     try:
         yield session
         session.commit()

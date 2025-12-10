@@ -10,11 +10,12 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.6
 google-generativeai>=0.3.0
-sentence-transformers>=2.2.0
-torch>=2.0.0
 requests>=2.31.0
 pinecone>=5.0.0
 python-dotenv>=1.0.0
 alembic>=1.12.0
 mangum>=0.17.0
+# Optional: Only needed if using local embeddings (USE_HF_API=false)
+# sentence-transformers>=2.2.0
+# torch>=2.0.0
 

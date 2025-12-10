@@ -4,8 +4,15 @@ Supports both local models and Hugging Face Inference API.
 """
 from typing import List, Optional
 import os
-from sentence_transformers import SentenceTransformer
 import requests
+
+# Optional import - only needed for local embeddings
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None
 
 class EmbeddingService:
     """
@@ -25,6 +32,12 @@ class EmbeddingService:
             self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.model_name}"
         else:
             # Use local sentence-transformers model
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                raise ValueError(
+                    "sentence-transformers not installed. "
+                    "Install it with: pip install sentence-transformers torch "
+                    "OR use Pinecone-managed embeddings by setting PINECONE_USE_MANAGED=true"
+                )
             try:
                 self.model = SentenceTransformer(self.model_name)
             except Exception as e:
