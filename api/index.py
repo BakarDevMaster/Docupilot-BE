@@ -12,28 +12,45 @@ if backend_dir not in sys.path:
 handler = None
 init_error = None
 
+# Try importing step by step to identify the failing import
 try:
+    print("Step 1: Importing mangum...")
     from mangum import Mangum
-    from src.main import app
-    
-    # Vercel (or AWS Lambda-like) handler for FastAPI app
-    handler = Mangum(app)
-    print("Handler initialized successfully")
+    print("✓ Mangum imported successfully")
 except Exception as e:
-    # Capture the error for debugging
-    init_error = f"Import/Init error: {str(e)}\n{traceback.format_exc()}"
+    init_error = f"Failed to import mangum: {str(e)}\n{traceback.format_exc()}"
     print(init_error)
-    
-    # Create a simple error handler that returns the actual error
-    def error_handler(event, context):
-        error_detail = init_error if init_error else "Unknown initialization error"
+
+if not init_error:
+    try:
+        print("Step 2: Importing FastAPI app...")
+        from src.main import app
+        print("✓ FastAPI app imported successfully")
+    except Exception as e:
+        init_error = f"Failed to import FastAPI app: {str(e)}\n{traceback.format_exc()}"
+        print(init_error)
+
+if not init_error:
+    try:
+        print("Step 3: Creating Mangum handler...")
+        handler = Mangum(app)
+        print("✓ Handler created successfully")
+    except Exception as e:
+        init_error = f"Failed to create handler: {str(e)}\n{traceback.format_exc()}"
+        print(init_error)
+
+if init_error:
+    # Create error handler that returns the actual error
+    def error_handler(request):
+        error_msg = init_error[:2000] if len(init_error) > 2000 else init_error
         return {
             "statusCode": 500,
             "headers": {"Content-Type": "application/json"},
             "body": json.dumps({
                 "error": "Initialization failed",
-                "detail": error_detail[:500]  # Limit length
+                "detail": error_msg
             })
         }
     handler = error_handler
+    print("Error handler created due to initialization failure")
 

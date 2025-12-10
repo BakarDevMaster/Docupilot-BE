@@ -36,15 +36,23 @@ def get_engine():
         )
     return _engine
 
-# For backward compatibility, create engine on import if DATABASE_URL is valid
-try:
-    if DATABASE_URL and "postgresql://" in DATABASE_URL:
-        engine = get_engine()
-    else:
-        engine = None
-except Exception as e:
-    print(f"Warning: Could not initialize database engine on import: {e}")
-    engine = None
+# For backward compatibility - lazy initialization only
+# Don't create engine on import to avoid serverless cold start issues
+engine = None
+
+def _lazy_init_engine():
+    """Lazy initialization of engine for backward compatibility."""
+    global engine
+    if engine is None:
+        try:
+            if DATABASE_URL and "postgresql://" in DATABASE_URL:
+                engine = get_engine()
+            else:
+                engine = None
+        except Exception as e:
+            print(f"Warning: Could not initialize database engine: {e}")
+            engine = None
+    return engine
 
 def init_db():
     """Initialize database tables."""
